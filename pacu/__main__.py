@@ -3,7 +3,7 @@
 """Package entry point."""
 
 
-from pacu.gui import main
+from pacu.cli import main
 
 
 if __name__ == '__main__':  # pragma: no cover
