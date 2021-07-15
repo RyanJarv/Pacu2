@@ -11,32 +11,70 @@ This project was generated with [cookiecutter](https://github.com/audreyr/cookie
 [![PyPI Version](https://img.shields.io/pypi/v/pacu.svg)](https://pypi.org/project/pacu)
 [![PyPI License](https://img.shields.io/pypi/l/pacu.svg)](https://pypi.org/project/pacu)
 
-# Setup
-
-## Requirements
-
-* Python 3.9+
-
-## Installation
-
-Install it directly into an activated virtual environment:
-
-```text
-$ pip install pacu
-```
-
-or add it to your [Poetry](https://poetry.eustace.io/) project:
-
-```text
-$ poetry add pacu
-```
-
 # Usage
 
-After installation, the package can imported:
+```bash
+$ make docker/dev
+$ python -m pacu repl
+>
+> ** tab **
+items users
+>
+> users
+Usage: __main__.py users [OPTIONS] COMMAND [ARGS]...
 
-```text
-$ python
->>> import pacu
->>> pacu.__version__
+Options:
+  --help  Show this message and exit.
+
+Commands:
+  create
+  delete
+>
+> users create my_user
+Creating user: my_user
 ```
+
+Or alternatively:
+```
+$ python3 -m pacu users create my_user
+Creating user: my_user
+```
+
+Note: The `python3 -m pacu` part is only needed for dev, typically it would just be `pacu`.
+
+
+# Features
+* Full featured command prompt using much less code then pacu
+  * (REPL Code)[https://github.com/RhinoSecurityLabs/pacu2/blob/3ad5877b0181b087e11a5cd32395c5653f1bae5d/pacu/pacu.py#L68]
+  * Features: Reverse search, auto-complete w/ suggestions, history across sessions.
+* Commands can be ran the same way in the REPL as executed directly
+  * `pacu users` in the system shell is the same as `users`
+* Simplified modules
+* Access to steampipe via [steampipe_alchemy](https://github.com/RyanJarv/steampipe_alchemy).
+  * Currently this is installed and started at runtime, but usage from inside a module is a WIP.
+
+
+## Simplified modules
+This is a valid module:
+
+```
+def main(name: str = 'test'):
+  print(f"Hello {name}")
+```
+
+It can be run as `pacu module_name`, or in the repl as `module_name`. It takes an optional string argument `name`, which
+defaults to `test` and outputs a help when run with `--help`.
+
+```
+> items --help
+Usage: __main__.py items [OPTIONS]
+
+Options:
+  --name TEXT  [default: test]
+  --help       Show this message and exit.
+> items
+Hello test
+> items --name world
+Hello world
+```
+
