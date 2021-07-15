@@ -20,17 +20,28 @@ RUN curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/inst
 
 COPY poetry.lock pyproject.toml ./
 
-# Allow installing dev dependencies to run tests
-ARG INSTALL_DEV=true
-RUN if [ "${INSTALL_DEV}x" = "truex" ] ; then poetry install --no-root ; else poetry install --no-root --no-dev ; fi
+RUN /bin/sh -c "$(curl -fsSL https://raw.githubusercontent.com/turbot/steampipe/main/install.sh)"
+RUN steampipe plugin install aws
+
+
+WORKDIR /usr/src/pacu
+RUN useradd -m -s /bin/bash pacu
 
 ENV PATH "/opt/poetry/venv/bin:${PATH}"
 ENV VIRTUAL_ENV "/opt/poetry/venv"
-RUN echo "export PATH=/opt/poetry/venv/bin:${PATH}" >> ~/.profile && \
-    echo "export VIRTUAL_ENV=/opt/poetry/venv" >> ~/.profile
+RUN mkdir -p "$VIRTUAL_ENV" \
+        && chown -R pacu:pacu "$VIRTUAL_ENV"
 
-CMD mkdir -p /usr/src/pacu
-WORKDIR /usr/src/pacu
+USER pacu
 
-COPY . .
-CMD ["python", "-m", "pacu"]
+RUN poetry install --no-root
+
+
+RUN echo "export PATH=/opt/poetry/venv/bin:${PATH}" >> /home/pacu/.profile && \
+    echo "export VIRTUAL_ENV=/opt/poetry/venv" >> /home/pacu/.profile
+
+
+#COPY . .
+
+CMD ["bash", "-l"]
+#CMD ["python", "-m", "pacu"]

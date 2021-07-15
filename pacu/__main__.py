@@ -1,10 +1,7 @@
 #!/usr/bin/env python
 
 """Package entry point."""
+from .cli import app
 
 
-from pacu.cli import main
-
-
-if __name__ == '__main__':  # pragma: no cover
-    main()
+app(prog_name="pacu")

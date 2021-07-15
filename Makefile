@@ -63,7 +63,7 @@ check: install format  ## Run formaters, linters, and static analysis
 ifdef CI
 	git diff --exit-code
 endif
-	poetry run mypy $(PACKAGE) tests --config-file=.mypy.ini
+	poetry run mypy $(PACKAGE) tests --config-file=.mypy.ini --show-error-codes
 	poetry run pylint $(PACKAGE) tests --rcfile=.pylint.ini
 	poetry run pydocstyle $(PACKAGE) tests
 
@@ -165,6 +165,20 @@ $(EXE_FILES): $(MODULES) $(PACKAGE).spec
 $(PACKAGE).spec:
 	poetry run pyi-makespec $(PACKAGE)/__main__.py --onefile --windowed --name=$(PACKAGE)
 
+docker/dev: docker/dev/build docker/dev/run
+
+docker/dev/build:
+	docker build -f Dockerfile.dev -t pacu-dev .
+
+docker/dev/run:
+	docker run -it \
+		-e AWS_ACCESS_KEY_ID \
+		-e AWS_SECRET_ACCESS_KEY \
+		-e AWS_SESSION_TOKEN \
+		-v "${PWD}:/usr/src/pacu" \
+		-v "/Users/work/Code/steampipe_alchemy:/Users/work/Code/steampipe_alchemy" \
+		pacu-dev
+
 # RELEASE #####################################################################
 
 .PHONY: upload
@@ -198,6 +212,8 @@ clean-all: clean
 .PHONY: .clean-build
 .clean-build:
 	rm -rf *.spec dist build
+
+
 
 # HELP ########################################################################
 

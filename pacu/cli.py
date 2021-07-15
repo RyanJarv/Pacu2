@@ -1,21 +1,19 @@
-"""A sample CLI."""
+import typer
 
-import click
-import log
-
-from . import utils
+from pacu.pacu import PacuRepl
 
 
-@click.command()
-@click.argument('feet')
-def main(feet=None):
-    log.init()
+app = typer.Typer()
 
-    meters = utils.feet_to_meters(feet)
-
-    if meters is not None:
-        click.echo(meters)
+pacu = PacuRepl()
+pacu.load_modules(app)
 
 
-if __name__ == '__main__':  # pragma: no cover
-    main()
+@app.command('repl')
+def repl():
+    pacu.start()
+    pacu.repl()
+
+
+if __name__ == '__main__':
+    app(prog_name="pacu")

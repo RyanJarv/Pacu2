@@ -1,13 +1,12 @@
 """A sample module."""
+import os
+from typing import List
 
-import log
+import boto3
 
 
-def feet_to_meters(feet):
-    """Convert feet to meters."""
-    try:
-        value = float(feet)
-    except ValueError:
-        log.error("Unable to convert to float: %s", feet)
-    else:
-        return (0.3048 * value * 10000.0 + 0.5) / 10000.0
+def get_all_regions() -> List[str]:
+    region = os.getenv('AWS_REGION') or os.getenv('AWS_DEFAULT_REGION') or 'us-east-1'
+    resp = boto3.client('ec2', region_name=region).describe_regions()
+    regions = [r['RegionName'] for r in resp['Regions']]
+    return regions

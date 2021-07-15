@@ -12,6 +12,7 @@ Icon*
 # Temporary virtual environment files
 /.cache/
 /.venv/
+/venv/
 
 # Temporary server files
 .env
@@ -46,3 +47,9 @@ coverage.xml
 
 # Eclipse
 .settings
+
+# vim
+.*.swp
+
+# IntelliJ
+.idea
