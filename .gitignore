@@ -53,3 +53,7 @@ coverage.xml
 
 # IntelliJ
 .idea
+
+
+steampipe_alchemy
+input.txt

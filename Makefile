@@ -168,16 +168,17 @@ $(PACKAGE).spec:
 docker/dev: docker/dev/build docker/dev/run
 
 docker/dev/build:
-	docker build -f Dockerfile.dev -t pacu-dev .
+	docker build -f Dockerfile.dev -t pacu-dev:latest .
 
 docker/dev/run:
 	docker run -it \
+		-p 8001:8001 \
 		-e AWS_ACCESS_KEY_ID \
 		-e AWS_SECRET_ACCESS_KEY \
 		-e AWS_SESSION_TOKEN \
 		-v "${PWD}:/usr/src/pacu" \
-		-v "/Users/work/Code/steampipe_alchemy:/Users/work/Code/steampipe_alchemy" \
-		pacu-dev
+		-w /usr/src/pacu \
+		pacu-dev:latest
 
 # RELEASE #####################################################################
 

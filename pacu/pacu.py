@@ -1,9 +1,14 @@
 import importlib
+from builtins import enumerate
+
+import click
+import itertools
 import os
 import shlex
+import textwrap
 from pathlib import Path
 from types import ModuleType
-from typing import Dict
+from typing import Dict, Optional, List
 
 import typer
 from prompt_toolkit import PromptSession
@@ -13,22 +18,24 @@ from prompt_toolkit.history import FileHistory
 from prompt_toolkit.shortcuts import CompleteStyle, set_title
 from prompt_toolkit.styles import Style
 
-import steampipe_alchemy
-from pacu import settings, utils
+# from pacu import settings
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+app_dir = Path(typer.get_app_dir('pacu'))
+profile_path = app_dir / 'profile'
 
 
 class Pacu:
     def __init__(self):
-        self.steam = steampipe_alchemy.SteamPipe()
-        self.modules = self.get_modules()
+        self.modules: Dict[str, ModuleType] = self.get_modules()
 
     @staticmethod
     def get_modules() -> Dict[str, ModuleType]:
         modules = {}
-        for path in Path(settings.ROOT_DIR).glob(
-            os.path.join('modules', '*', 'main.py')
+        for path in Path(ROOT_DIR).glob(
+                os.path.join('modules', '*', 'main.py')
         ):
-            rel = path.relative_to(settings.ROOT_DIR)
+            rel = path.relative_to(ROOT_DIR)
             name = rel.parts[-2]
             mod_name = '.'.join(rel.parts)
             modules[name] = importlib.import_module(
@@ -36,8 +43,7 @@ class Pacu:
             )
         return modules
 
-    @staticmethod
-    def load_modules(app: 'typer.Typer'):
+    def load_modules(self, app: 'typer.Typer'):
         """Check if app object exists and fallback to looking for the main function.
 
         The app method allows more customizations as well as multiple commands while the
@@ -50,19 +56,22 @@ class Pacu:
                  typer.echo(f"Hello {name}")
         """
 
-        modules = Pacu.get_modules()
-        for name, mod in modules.items():
-
-            try:
-                app.add_typer(mod.app, name=name)  # type: ignore[attr-defined]
-            except AttributeError:
-                app.command(name=name)(mod.main)  # type: ignore[attr-defined]
-
-    def start(self):
-        self.steam.install(['aws'])
-        regions = utils.get_all_regions()
-        self.steam.update_config(aws={"plugin": "aws", "regions": regions})
-        self.steam.start()
+        for name, mod in self.modules.items():
+            if getattr(mod, "main", False):
+                app.command(
+                    name=name,
+                    help=getattr(mod, "help", ''),
+                    short_help=getattr(mod, "short_help", ''),
+                )(mod.main)  # type: ignore[attr-defined]
+            elif getattr(mod, "app", False):
+                app.add_typer(
+                    mod.app,
+                    name=name,
+                    help=mod.app.info.help,
+                    short_help=mod.app.info.short_help,
+                )  # type: ignore[attr-defined]
+            else:
+                print(f"[WARN] No main or app attribute found for module {mod.__name__}")
 
 
 class PacuRepl(Pacu):
@@ -70,6 +79,8 @@ class PacuRepl(Pacu):
         super().__init__()
 
         set_title("Pacu")
+
+        self.app: 'typer.Typer' = typer.Typer(add_completion=False)
 
         self.style = Style.from_dict(
             {
@@ -84,23 +95,52 @@ class PacuRepl(Pacu):
             history=self.history,
             auto_suggest=AutoSuggestFromHistory(),
             enable_history_search=True,
-            completer=WordCompleter(list(self.get_modules().keys()), ignore_case=True),
+            completer=WordCompleter(list(self.modules.keys()), ignore_case=True),
             complete_style=CompleteStyle.READLINE_LIKE,
             style=self.style,
         )
 
+        self._builtins = {
+            "help": self.help
+        }
+
+    def help(self, args: List[str]):
+        click_cmd = typer.main.get_command(self.app)
+        ctx = click.Context(click_cmd)
+
+        for i, arg in enumerate(args):
+            if not getattr(click_cmd, "get_command", False):
+                typer.echo("\n\n" + typer.style("Error:", fg=typer.colors.RED, bold=True) + \
+                           f": Command '{' '.join(args[:i])}' does not have any subcommand named '{arg}'.\n\n")
+                break
+
+            click_cmd = click_cmd.get_command(ctx, arg)
+            if not click_cmd:
+                typer.echo(typer.style("Error:", fg=typer.colors.RED, bold=True) + \
+                           f": No command named '{arg}' was found registered with pacu.")
+                return
+
+            ctx = click.Context(click_cmd)
+
+        print(ctx.get_help())
+
     def repl(self):
-        repl: 'typer.Typer' = typer.Typer()
-        self.load_modules(repl)
+        self.load_modules(self.app)
 
         while True:
             try:
-                t = self.session.prompt('> ')
-                cmd = typer.main.get_command(repl)
+                cmd: str = shlex.split(self.session.prompt('> '))
+                run = typer.main.get_command(self.app)
+
                 try:
-                    cmd.main(shlex.split(t), standalone_mode=False)
+                    self._builtins[cmd[0]](cmd[1:])
+                    continue
+                except KeyError:
+                    pass
+
+                try:
+                    run.main(cmd, standalone_mode=False)
                 except Exception as e:  # pylint: disable=broad-except
                     print(e)
-
             except KeyboardInterrupt:
                 pass

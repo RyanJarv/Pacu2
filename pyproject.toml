@@ -24,10 +24,11 @@ python = ">=3.7,<4.0"
 
 #minilog = "^2.0"
 typer = "^0.3.2"
-steampipe-alchemy = {git = "https://github.com/RyanJarv/steampipe_alchemy.git", rev = "main"}
+#steampipe-alchemy = {git = "https://github.com/RyanJarv/steampipe_alchemy.git", rev = "main"}
 ptpython = "^3.0.19"
 prompt-toolkit = "^3.0.19"
 boto3 = "^1.17.109"
+sqlite-utils = "^3.12"
 
 [tool.poetry.dev-dependencies]
 # Types
@@ -59,7 +60,7 @@ mkdocs = "~1.0"
 pygments = "^2.5.2"
 
 # Tooling
-pyinstaller = "*"
+pyinstaller = "*"  # TODO: 0Failing install on alpine atm
 sniffer = "*"
 
 # Tooling -- MacOS
