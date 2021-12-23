@@ -1,3 +1,6 @@
+import functools
+import typer
+import json
 import importlib
 from builtins import enumerate
 
@@ -10,7 +13,7 @@ from pathlib import Path
 from types import ModuleType
 from typing import Dict, Optional, List
 
-import typer
+from typing_extensions import get_type_hints
 from prompt_toolkit import PromptSession
 from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
 from prompt_toolkit.completion import WordCompleter
@@ -19,6 +22,8 @@ from prompt_toolkit.shortcuts import CompleteStyle, set_title
 from prompt_toolkit.styles import Style
 
 # from pacu import settings
+from pacu.config import Config
+
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 app_dir = Path(typer.get_app_dir('pacu'))
@@ -101,28 +106,10 @@ class PacuRepl(Pacu):
         )
 
         self._builtins = {
-            "help": self.help
+            "help": functools.partial(_help, self.app),
+            "ls": functools.partial(_help, self.app),
+            "config": _config,
         }
-
-    def help(self, args: List[str]):
-        click_cmd = typer.main.get_command(self.app)
-        ctx = click.Context(click_cmd)
-
-        for i, arg in enumerate(args):
-            if not getattr(click_cmd, "get_command", False):
-                typer.echo("\n\n" + typer.style("Error:", fg=typer.colors.RED, bold=True) + \
-                           f": Command '{' '.join(args[:i])}' does not have any subcommand named '{arg}'.\n\n")
-                break
-
-            click_cmd = click_cmd.get_command(ctx, arg)
-            if not click_cmd:
-                typer.echo(typer.style("Error:", fg=typer.colors.RED, bold=True) + \
-                           f": No command named '{arg}' was found registered with pacu.")
-                return
-
-            ctx = click.Context(click_cmd)
-
-        print(ctx.get_help())
 
     def repl(self):
         self.load_modules(self.app)
@@ -144,3 +131,47 @@ class PacuRepl(Pacu):
                     print(e)
             except KeyboardInterrupt:
                 pass
+
+
+def _config(args: List[str]):
+    conf = Config()
+
+
+    try:
+        if len(args) == 0:
+            print(conf.db.all())
+        elif len(args) == 1:
+            conf.get(args[0])
+        elif len(args) == 2:
+            # If two arguments are passed it's not clear if the value should be a value or a string. Since the Config
+            # object validates parameters passed to it we can attempt to pass as a string, if that fails pass a list.
+            try:
+                conf.set(args[0], args[1])
+            except TypeError:
+                conf.set(args[0], [args[1]])
+        else:
+            conf.set(args[0], args[1:])
+    except AttributeError as e:
+        print(e)
+
+
+def _help(app: 'typer.Typer', args: List[str]):
+    click_cmd = typer.main.get_command(app)
+    ctx = click.Context(click_cmd)
+
+    for i, arg in enumerate(args):
+        if not getattr(click_cmd, "get_command", False):
+            typer.echo("\n\n" + typer.style("Error:", fg=typer.colors.RED, bold=True) + \
+                       f": Command '{' '.join(args[:i])}' does not have any subcommand named '{arg}'.\n\n")
+            break
+
+        click_cmd = click_cmd.get_command(ctx, arg)
+        if not click_cmd:
+            typer.echo(typer.style("Error:", fg=typer.colors.RED, bold=True) + \
+                       f": No command named '{arg}' was found registered with pacu.")
+            return
+
+        ctx = click.Context(click_cmd)
+
+    print(ctx.get_help())
+
