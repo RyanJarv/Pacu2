@@ -29,6 +29,7 @@ ptpython = "^3.0.19"
 prompt-toolkit = "^3.0.19"
 boto3 = "^1.17.109"
 sqlite-utils = "^3.12"
+boto3-stubs = {extras = ["iam"], version = "^1.20.26"}
 
 [tool.poetry.dev-dependencies]
 # Types

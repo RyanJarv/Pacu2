@@ -89,7 +89,8 @@ class Scan:
                     db[svc].add_foreign_key(*fk, ignore=True)
                 except Exception as e:
                     print(e)
-                    import pdb; pdb.set_trace()
+                    import pdb;
+                    pdb.set_trace()
                     continue
 
     def query(self, db_fk, svc):
@@ -143,7 +144,6 @@ class Scan:
 
                 if 'vpc_id' in model_info.columns.keys():
                     table_fk.append(("vpc_id", "AwsVpc", "vpc_id"))
-
 
                 if 'network_acl_id' in model_info.columns.keys():
                     table_fk.append(("network_acl_id", "AwsVpcNetworkAcl", "network_acl_id"))
@@ -237,7 +237,6 @@ class Scan:
             self.sem.release()
             print("done: " + str(svc))
 
-
 @app.command()
 def view():
     cli.run()
@@ -245,4 +244,5 @@ def view():
 @app.command()
 def scan():
     asyncio.run(Scan().run())
+
 
