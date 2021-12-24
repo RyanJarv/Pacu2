@@ -1,12 +1,7 @@
-short_help = 'short help'
+short_help = 'Subdomain scanner.'
 
-help = '''
-asdf
+help = '''This module scans subdomains for a given target and adds them to the resource DB.'''
 
-hello from help
-
-sdf
-'''
 
 def main(name: str = 'test'):
     print(f"Hello {name}")

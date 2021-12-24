@@ -26,9 +26,13 @@ def get_profile():
         return "default"
 
 
-def get_config_path():
+def shared_config_path():
     p = os.getenv('AWS_CONFIG_FILE') or os.path.expanduser('~/.aws/config')
     return p
 
 
+
+def shared_credential_path():
+    p = os.getenv('AWS_CREDENTIAL_FILE') or os.path.expanduser('~/.aws/credentials')
+    return p
 

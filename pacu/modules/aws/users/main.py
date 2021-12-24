@@ -13,6 +13,7 @@ if typing.TYPE_CHECKING:
 
 @app.command()
 def create(name: str = typer.Argument(default=False)):
+    """create will create a new IAM user with administrative permissions."""
     iam = boto3.resource('iam')
     user = iam.User(name)
     try:
@@ -39,6 +40,7 @@ def create(name: str = typer.Argument(default=False)):
 
 @app.command()
 def delete(name: str = typer.Argument(default=False)):
+    """delete will delete the given user."""
     iam = boto3.resource('iam')
     user = iam.User(name)
 

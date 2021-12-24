@@ -95,12 +95,14 @@ class PacuRepl(Pacu):
                 'scrollbar.button': 'bg:#222222',
             }
         )
+        completion = list(self.modules.keys())
+        completion.extend(['help', 'ls'])
         self.history = FileHistory(os.path.expanduser("~/.pacu_history"))
         self.session: 'PromptSession' = PromptSession(
             history=self.history,
             auto_suggest=AutoSuggestFromHistory(),
             enable_history_search=True,
-            completer=WordCompleter(list(self.modules.keys()), ignore_case=True),
+            completer=WordCompleter(completion  , ignore_case=True),
             complete_style=CompleteStyle.READLINE_LIKE,
             style=self.style,
         )
@@ -135,22 +137,8 @@ class PacuRepl(Pacu):
 
 def _config(args: List[str]):
     conf = Config()
-
-
     try:
-        if len(args) == 0:
-            print(conf.db.all())
-        elif len(args) == 1:
-            conf.get(args[0])
-        elif len(args) == 2:
-            # If two arguments are passed it's not clear if the value should be a value or a string. Since the Config
-            # object validates parameters passed to it we can attempt to pass as a string, if that fails pass a list.
-            try:
-                conf.set(args[0], args[1])
-            except TypeError:
-                conf.set(args[0], [args[1]])
-        else:
-            conf.set(args[0], args[1:])
+        print(conf.cmd(args))
     except AttributeError as e:
         print(e)
 

@@ -3,7 +3,7 @@ import configparser
 import typer
 
 from pacu.settings import profile_path
-from pacu.utils import get_config_path
+from pacu.utils import shared_credential_path
 
 app = typer.Typer()
 
@@ -19,16 +19,16 @@ def use():
 
 @app.command(name='list', help='help for list command', short_help='list cmd')
 def _list():
-    print(f"*** {get_config_path()} ***")
+    print(f"*** {shared_credential_path()} ***")
     for i, profile in enumerate(get_profiles()):
         print(f"{i}) {profile}")
 
 
 def get_profiles():
     config = configparser.ConfigParser()
-    config.read(get_config_path())
+    config.read(shared_credential_path())
     for profile in config.sections():
-        yield profile.removeprefix('profile ')
+        yield profile
 
 
 if __name__ == "__main__":

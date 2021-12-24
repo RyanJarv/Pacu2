@@ -15,7 +15,7 @@ def callback():
         os.makedirs(app_dir, exist_ok=True)
 
 
-app = typer.Typer(callback=callback)
+app = typer.Typer(callback=callback, context_settings={"help_option_names": ["-h", "--help"]})
 
 pacu = PacuRepl()
 pacu.load_modules(app)
@@ -23,6 +23,7 @@ pacu.load_modules(app)
 
 @app.command('repl')
 def repl():
+    """Runs the pacu console as a Read eval print loop."""
     pacu.repl()
 
 
