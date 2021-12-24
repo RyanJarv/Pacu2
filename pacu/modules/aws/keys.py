@@ -1,20 +1,25 @@
 import configparser
+from typing import Optional
 
 import typer
 
-from pacu.settings import profile_path
-from pacu.utils import shared_credential_path
+from pacu.config import Config
+from pacu.aws import shared_credential_path
 
 app = typer.Typer()
 
 
 @app.command(help='help for use command', short_help='use cmd')
-def use():
-    _list()
+def use(selection: Optional[int] = typer.Argument(False)):
     profiles = get_profiles()
-    resp = typer.prompt("selection> ")
-    profile = list(profiles)[int(resp)]
-    profile_path.write_text(profile)
+
+    if not selection:
+        selection = typer.prompt("selection> ")
+
+    p = list(profiles)[int(selection)]
+    Config().profile = p
+
+    print(f"Set current AWS profile to {p}")
 
 
 @app.command(name='list', help='help for list command', short_help='list cmd')

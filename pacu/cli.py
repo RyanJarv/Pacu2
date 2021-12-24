@@ -5,7 +5,7 @@ import typer
 from pacu.pacu import PacuRepl
 
 from pacu.settings import profile_path, app_dir
-from pacu.utils import set_profile_env
+from pacu.aws import set_profile_env
 
 
 def callback():
@@ -27,7 +27,5 @@ def repl():
     pacu.repl()
 
 
-
 if __name__ == '__main__':
     app(prog_name="pacu")
-

@@ -6,23 +6,27 @@ from urllib.parse import urlencode
 import boto3
 
 import typer
-from . import users, keys
+
+from pacu.config import Config
+from . import users, keys, ec2
 
 app = typer.Typer(help='Modules relating to AWS', short_help='Modules relating to AWS.')
 
-app.add_typer(keys.app, name='keys', help='help for keys command', short_help='keys cmd')
-# app.add_typer(view.app, name='view', help='help for view command', short_help='view cmd')
-
+app.add_typer(keys.app, name='keys', help='List and set current AWS credentials.', short_help='AWS credential management')
 app.add_typer(users.app, name='users', help='Add, modify, and delete users.', short_help='AWS User Module')
+app.add_typer(ec2.app, name='ec2', help='Info on EC2 resources', short_help='EC2 info')
+
 app.command()
 
 if typing.TYPE_CHECKING:
     import mypy_boto3_sts
+    import mypy_boto3_ec2
 
 
 @app.command(help='Prints out the current AWS user.', short_help='whoami cmd')
 def whoami():
-    sts = boto3.client('sts')
+    sess = boto3.Session(profile_name=Config().profile)
+    sts = sess.client('sts')
     resp = sts.get_caller_identity()
     print(f"Arn: {resp['Arn']}")
     print(f"UserID: {resp['UserId']}")
@@ -93,14 +97,14 @@ def login(
     url = 'https://signin.aws.amazon.com/federation?' + urlencode(params)
 
     if stdout:
-        print('Paste the following URL into a web browser to login as session {}...\n'.format(active_session.name))
+        print('Paste the following URL into a web browser to login as session {}...\n'.format(url))
     else:
         ret = typer.launch(url)
         if ret == 0:
             print('Successfully Launched a new session in the browser')
         else:
             print('Failed to launch the default browser. Try pasting the following URL into a web browser to login '
-                  'as session {}...\n'.format(active_session.name))
+                  'as session {}...\n'.format(url))
 
 
 if __name__ == "__main__":

@@ -102,7 +102,7 @@ class PacuRepl(Pacu):
             history=self.history,
             auto_suggest=AutoSuggestFromHistory(),
             enable_history_search=True,
-            completer=WordCompleter(completion  , ignore_case=True),
+            completer=WordCompleter(completion, ignore_case=True),
             complete_style=CompleteStyle.READLINE_LIKE,
             style=self.style,
         )

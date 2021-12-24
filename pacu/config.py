@@ -1,8 +1,8 @@
+import json
 import os
 from pathlib import Path
-from typing import List, AnyStr
+from typing import List, AnyStr, Callable
 
-import typer
 from tinydb import TinyDB, Query
 from typing_extensions import get_type_hints
 from typeguard import typechecked, check_type
@@ -116,24 +116,39 @@ class PersistentClass(object):
         self.db: TinyDB = db
         self.namespace = namespace
 
+    def _type(self, key):
+        return get_type_hints(self)[key]
+
     def __setattr__(self, key: AnyStr, value):
         if key in self.__dict__.keys():
             return super().__setattr__(key, value)
 
+        value_t = self._type(key)
+
         # Validate the type passed is correct, the types at the top of this class is what is referenced here.
         try:
-            check_type('regions', value, get_type_hints(self)[key])
+            check_type('regions', value, value_t)
         except KeyError:
             raise AttributeError(f"The '{self.namespace}' {self.__class__.__name__} profile has no key named '{key}'")
 
+        os.putenv(f"PACU_{key.upper()}", json.dumps(value))
         self.db.upsert({"namespace": self.namespace, key: value}, Query().namespace == self.namespace)
 
+        set_func = getattr(self, f"set_{key}", False)
+        if callable(set_func):
+            set_func(value)
+
     def __getattr__(self, key: AnyStr):
+        env = os.getenv(f"PACU_{key.upper()}")
+        if env:
+            return json.loads(env)
+
         resp = self.db.get(Query().namespace == self.namespace)
         if resp is None:
             raise AttributeError(f"No {self.__class__.__name__} key named '{self.namespace}' was found.")
         else:
             try:
+                os.putenv(f"PACU_{key.upper()}", json.dumps(resp[key]))
                 return resp[key]
             except KeyError:
                 raise AttributeError(f"The '{self.namespace}' {self.__class__.__name__} has no key named '{key}'")
@@ -144,17 +159,32 @@ class PersistentClass(object):
 
 class Config(PersistentClass):
     def __init__(self, profile=None):
-        if not profile:
-            profile = get_profile()
-        super().__init__(namespace=profile)
+        ns = profile \
+             or os.getenv('PACU_PROFILE') \
+             or 'default'
+        super().__init__(namespace=ns)
 
-    regions: List[str]
+    regions: list[str]
+    profile: str
+
+    # @staticmethod
+    # def set_profile(profile):
+    #     os.putenv('PACU_PROFILE', profile)
+    #
+    # def set_regions(self, regions):
+    #     pass
 
 
-class Credentials(PersistentClass):
-    def __init__(self, config: str, profile: str = None):
-        p = app_dir/config/'credentials.json'
-        os.mkdir(p.parent)
-        super().__init__(path=p, namespace=profile)
+    # @property
+    # def regions(self):
+    #     return super().regions
+    #
 
-    regions: List[str]
+#
+# class Credentials(PersistentClass):
+#     def __init__(self, config: str, profile: str = None):
+#         p = app_dir/config/'credentials.json'
+#         os.mkdir(p.parent)
+#         super().__init__(path=p, namespace=profile)
+#
+#     regions: List[str]
