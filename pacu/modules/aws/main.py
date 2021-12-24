@@ -8,13 +8,14 @@ import boto3
 import typer
 
 from pacu.config import Config
-from . import users, keys, ec2
+from . import users, keys, ec2, discover
 
 app = typer.Typer(help='Modules relating to AWS', short_help='Modules relating to AWS.')
 
 app.add_typer(keys.app, name='keys', help='List and set current AWS credentials.', short_help='AWS credential management')
 app.add_typer(users.app, name='users', help='Add, modify, and delete users.', short_help='AWS User Module')
 app.add_typer(ec2.app, name='ec2', help='Info on EC2 resources', short_help='EC2 info')
+app.add_typer(discover.app, name='discover', help='Info on EC2 resources', short_help='EC2 info')
 
 app.command()
 

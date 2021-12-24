@@ -32,6 +32,7 @@ def shared_credential_path():
 
 
 def for_each_region(*pargs, **pkwargs):
+    """Similar to the default_region but the wrapped function get's invoked for each region set in the config."""
     def _decr_args(func: typing.Callable):
         @wraps(func)
         def _wrapper(*args, **kwargs):
@@ -44,3 +45,17 @@ def for_each_region(*pargs, **pkwargs):
     return _decr_args
 
 
+def default_region(*pargs, **pkwargs):
+    """Passes a session object using the default region and the region name to the wrapped function.
+
+    The session is passed to the sess argument and the region string is passed to the 'region' argument of the
+    wrapped function.
+    """
+    def _decr_args(func: typing.Callable):
+        @wraps(func)
+        def _wrapper(*args, **kwargs):
+            region = Config().regions[0]
+            sess = boto3.Session(*pargs, region_name=region, **pkwargs)
+            return func(*args, sess=sess, region=region, **kwargs)
+        return _wrapper
+    return _decr_args
