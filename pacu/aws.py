@@ -6,6 +6,7 @@ from typing import List
 import boto3
 
 from pacu.config import Config
+from pacu.utils import limit_requests
 
 
 def get_all_regions() -> List[str]:
@@ -59,3 +60,7 @@ def default_region(*pargs, **pkwargs):
             return func(*args, sess=sess, region=region, **kwargs)
         return _wrapper
     return _decr_args
+
+
+def throttle_session(sess: 'boto3.Session', per_second: int):
+    sess.events.register('before-send.*.*', limit_requests(per_second))
