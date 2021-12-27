@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """Package entry point."""
-from .cli import app
+from pacu.cli import app
 
 
 app(prog_name="pacu")

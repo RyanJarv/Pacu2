@@ -123,25 +123,27 @@ class PersistentClass(object):
         if key in self.__dict__.keys():
             return super().__setattr__(key, value)
 
-        value_t = self._type(key)
-
         # Validate the type passed is correct, the types at the top of this class is what is referenced here.
+        value_t = self._type(key)
         try:
             check_type('regions', value, value_t)
         except KeyError:
             raise AttributeError(f"The '{self.namespace}' {self.__class__.__name__} profile has no key named '{key}'")
 
-        os.putenv(f"PACU_{key.upper()}", json.dumps(value))
         self.db.upsert({"namespace": self.namespace, key: value}, Query().namespace == self.namespace)
 
-        set_func = getattr(self, f"set_{key}", False)
-        if callable(set_func):
-            set_func(value)
+        try:
+            self.__set__(key, value)
+        except AttributeError:
+            pass
 
     def __getattr__(self, key: AnyStr):
-        env = os.getenv(f"PACU_{key.upper()}")
-        if env:
-            return json.loads(env)
+        try:
+            cache = self.__get__(key)
+            if cache:
+                return cache
+        except AttributeError:
+            pass
 
         resp = self.db.get(Query().namespace == self.namespace)
         if resp is None:
@@ -167,18 +169,12 @@ class Config(PersistentClass):
     regions: list[str]
     profile: str
 
-    # @staticmethod
-    # def set_profile(profile):
-    #     os.putenv('PACU_PROFILE', profile)
-    #
-    # def set_regions(self, regions):
-    #     pass
+    def __set__(self, key, value):
+        os.putenv(f"PACU_{key.upper()}", json.dumps(value))
 
+    def __get__(self, key):
+        return os.getenv(f"PACU_{key.upper()}")
 
-    # @property
-    # def regions(self):
-    #     return super().regions
-    #
 
 #
 # class Credentials(PersistentClass):

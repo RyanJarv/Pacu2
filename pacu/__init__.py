@@ -1,4 +1,5 @@
 from pkg_resources import DistributionNotFound, get_distribution
+from pacu.config import Config
 
 
 try:
