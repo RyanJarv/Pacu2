@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, List, Generator, Dict
 
 from pacu.config import Config
 from pacu.aws import default_region, throttle_session
-from pacu.data import ResourceDB, Resource
+from pacu.data import ResourceTable, CloudControlResource
 from pacu.utils import pcache
 
 MAX_WORKERS = 10
@@ -51,7 +51,6 @@ def run(sess: boto3.Session, region):
         _t = q.get()
         tasks.append(pool.submit(_list_resources, ctrl, _t))
 
-    rdb = ResourceDB()
     while tasks:
         reschedule = []
         for f in concurrent.futures.as_completed(tasks):
@@ -59,8 +58,7 @@ def run(sess: boto3.Session, region):
 
             for r in result.get('ResourceDescriptions', []):
                 props = json.loads(r['Properties'])
-                rdb.insert(Resource(props, doc_id=r['Identifier']))
-
+                ResourceTable(result['TypeName']).insert(CloudControlResource(props, identifier=r['Identifier']))
             if result.get('NextToken', False):
                 reschedule.append(pool.submit(_list_resources, ctrl, result))
             else:

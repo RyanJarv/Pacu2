@@ -7,6 +7,7 @@ from pacu.aws import for_each_region
 
 app = typer.Typer()
 
+from pacu.models.awsapi.ec2 import DescribeInstancesResult
 
 @app.command(name='list', help='list ec2 instances.')
 def _list():
@@ -15,11 +16,11 @@ def _list():
 
 @for_each_region(profile_name=Config().profile)
 def _list_ec2(sess: boto3.Session, region: str):
-    ec2 = sess.resource('ec2')
+    ec2 = sess.client('ec2')
     print('Region: ' + region)
-    for inst in ec2.instances.all():
-        print(inst)
-
+    resp = ec2.describe_instances()
+    result = DescribeInstancesResult(**resp).Reservations.__root__[0].
+    result.Reservations[0]
 
 if __name__ == "__main__":
     app()
