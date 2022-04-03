@@ -1,3 +1,5 @@
+Note: This was mostly a scratch space for various ideas. Check out [pacu3](github.com/RyanJarv/pacu3) for the (initial) rewrite.
+
 # Overview
 
 The AWS exploitation framework, designed for testing the security of Amazon Web Services environments.
