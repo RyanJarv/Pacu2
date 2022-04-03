@@ -1,4 +1,4 @@
-Note: This was mostly a scratch space for various ideas. Check out [pacu3](github.com/RyanJarv/pacu3) for the (initial) rewrite.
+Note: This was mostly a scratch space for various ideas. Check out [pacu3](https://github.com/RyanJarv/pacu3) for the (initial) rewrite.
 
 # Overview
 
